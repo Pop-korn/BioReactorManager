@@ -3,8 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dataclasses import dataclass
 from pydantic import BaseModel
-from mqtt_manager import blink_led
-
+import mqtt_manager
 app = FastAPI()
 
 # Enable CORS for frontend communication
@@ -24,16 +23,16 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @dataclass
 class Layer:
     id_: int
-    number: int  # Or a name which will be displayed.
+    name: str
     light_state: bool
 
-layers: list[Layer] = [Layer(i, 5 - i, True) for i in range(5)]  # Current state of the layers.
+layers: list[Layer] = [Layer(i, f'layer_{5 - i}', True) for i in range(5)]  # Current state of the layers.
 
 # API endpoint to provide items with local image paths
 @app.get("/get-state")
 def get_state():
     return [
-        {"id_": l.id_, "number": l.number, "light_state": l.light_state} for l in layers
+        {"id_": l.id_, "name": l.name, "light_state": l.light_state} for l in layers
     ]
 
 
@@ -44,18 +43,25 @@ class HarvestMeta(BaseModel):
 
 @app.post('/harvest-layer/{id_}')
 def harvest_layer(id_: int, harvest_meta: HarvestMeta):
-    blink_led()
-    return {"id_": id_, "duration": harvest_meta.duration}
+    mqtt_manager.harvest_layer(layer_id=id_, duration_seconds=harvest_meta.duration)
+    return [f'Successfully harvested layer {id_}.']
 
 
-
-# class LightMeta(BaseModel):
-#     state: bool
+@app.post('/blink-control-led')
+def blink_control_led():
+    mqtt_manager.blink_led()
+    return []
 
 @app.post('/switch-light/{id_}')
 def switch_light(id_: int):
     new_light_state = not layers[id_].light_state
     layers[id_].light_state = new_light_state
+
+    if new_light_state:
+        mqtt_manager.light_on(id_)
+    else:
+        mqtt_manager.light_off(id_)
+
     return {"id_" : id_, "new_light_state": new_light_state}
 
 

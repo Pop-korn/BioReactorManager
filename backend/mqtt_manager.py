@@ -11,12 +11,20 @@ CLEAN_SESSION = True
 logging.basicConfig(level=logging.INFO)  # error logging
 
 
-def send_to_esp_topic(rack=1, layer=1):
-    return f'rpi/rack{rack}/layer{layer}'
+def send_to_rack_esp_topic(rack=0):
+    return f'server_to_esp/rack{rack}'
 
 
-def receive_from_esp_topic(rack=1, layer=1):
-    return f'esp/rack{rack}/layer{layer}'
+def receive_from_rack_esp_topic(rack=0):
+    return f'esp_to_server/rack{rack}'
+
+
+def send_to_pump_esp_topic():
+    return 'server_to_esp/pump'
+
+
+def receive_from_pump_esp_topic():
+    return 'esp_to_server/pump'
 
 
 # use DEBUG,INFO,WARNING
@@ -41,16 +49,64 @@ def on_message(client, userdata, message):
 def on_publish(client, userdata, mid):
     logging.info('message published ' + str(mid))
 
+
 def blink_led():
-    msg = 'blink_led'
-    client.publish(send_to_esp_topic(), msg)
+    command = 'blink_led'
+    logging.info(command)
+    client.publish(send_to_rack_esp_topic(), command)
+
+
+def open_valve(layer_id):
+    command = f'open_valve_{layer_id}'
+    logging.info(command)
+    client.publish(send_to_rack_esp_topic(), command)
+
+
+def close_valve(layer_id):
+    command = f'close_valve_{layer_id}'
+    logging.info(command)
+    client.publish(send_to_rack_esp_topic(), command)
+
+
+def light_on(layer_id):
+    command = f'light_on_{layer_id}'
+    logging.info(command)
+    client.publish(send_to_rack_esp_topic(), command)
+
+
+def light_off(layer_id):
+    command = f'light_off_{layer_id}'
+    logging.info(command)
+    client.publish(send_to_rack_esp_topic(), command)
+
+
+def start_pump():
+    command = 'start_pump'
+    logging.info(command)
+    client.publish(send_to_pump_esp_topic(), command)
+
+def stop_pump():
+    command = 'stop_pump'
+    logging.info(command)
+    client.publish(send_to_pump_esp_topic(), command)
+
+def harvest_layer(layer_id: int, duration_seconds: int):
+    logging.info(f'START harvesting layer {layer_id}.')
+    open_valve(layer_id)
+    start_pump()
+    time.sleep(duration_seconds)  # Pumping.
+    stop_pump()
+    time.sleep(1)  # Prevent pressure spikes.
+    close_valve(layer_id)
+    logging.info(f'STOP harvesting layer {layer_id}.')
+
 
 
 client = mqtt.Client('ClientA', False)  # create client object
 client.connect(broker, port)  # establish connection
 time.sleep(1)
 client.loop_start()
-client.subscribe(receive_from_esp_topic())
+client.subscribe(receive_from_rack_esp_topic())
 
 # client.on_subscribe = on_subscribe   #assign function to callback
 # client.on_disconnect = on_disconnect #assign function to callback
@@ -60,14 +116,14 @@ client.on_message = on_message
 if __name__ == '__main__':
     # count = 1
     while True:  # runs forever break with CTRL+C
-        print('publishing to `', send_to_esp_topic() + '`')
+        print('publishing to `', send_to_rack_esp_topic() + '`')
         # msg = 'Sprava od A: ' + str(count)
         # count += 1
 
         rnd = np.random.random()
         msg = 'blink_led' if rnd < 0.5 else 'open_valve'
         # msg = 'step'
-        client.publish(send_to_esp_topic(), msg)
+        client.publish(send_to_rack_esp_topic(), msg)
 
         time.sleep(np.random.randint(5, 8))
 
