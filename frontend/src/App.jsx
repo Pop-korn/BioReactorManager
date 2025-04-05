@@ -94,7 +94,7 @@ const App = () => {
                 ))}
             </div>
             <button onClick={() => handleControlLEDClick()}>
-                Controll LED
+                Control LED
             </button>
         </div>
     );

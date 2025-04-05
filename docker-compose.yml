@@ -17,3 +17,13 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    network_mode: host  # Use host networking
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
