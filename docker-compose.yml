@@ -27,3 +27,16 @@ services:
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    environment:
+      - TZ=Europe/Bratislava  # Change this to your timezone
+      - WEBPASSWORD=pihole  # Set a password for the web interface
+      - PIHOLE_DNS_=8.8.8.8  # Upstream DNS servers (Google DNS)
+    volumes:
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    restart: unless-stopped
+    network_mode: host  # Use host network to bind DNS ports

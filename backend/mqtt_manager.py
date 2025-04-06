@@ -4,7 +4,7 @@ import time
 import numpy as np
 import paho.mqtt.client as mqtt
 
-broker = '10.0.32.141'
+broker = '192.168.0.102'
 port = 1883
 QOS = 1
 CLEAN_SESSION = True

@@ -4,7 +4,7 @@ import './App.css'
 const App = () => {
     const [layers, setLayers] = useState([]); // Stores layer data
 
-    const backend_uri = "http://10.0.32.141:8000";
+    const backend_uri = "http://192.168.0.102:8000";
 
     useEffect(() => {
         fetch(backend_uri + "/get-state")
@@ -60,6 +60,7 @@ const App = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+            <h1>Nitroduck BioReactor</h1>
             <div className="w-full max-w-sm">
                 {layers.map((layer) => (
                     <div
