@@ -13,6 +13,19 @@ const App = () => {
             .catch((error) => console.error("Error fetching layer data:", error));
     }, []);
 
+    // Fetch the state from the server every couple of seconds.
+    // TODO Implement a more efficient solution using WebSockets.
+    useEffect(() => {
+        const interval = setInterval(() => {
+          fetch(backend_uri + '/get-state')  // Adjust the URL to your backend endpoint
+            .then((response) => response.json())
+            .then((data) => setLayers(data))
+            .catch((error) => console.error("Error fetching layer data:", error));
+        }, 1000); // 1000ms = 1 second
+               // Clean up the interval on component unmount
+        return () => clearInterval(interval);
+    }, []);
+
     const handleHarvestClick = (id) => {
         fetch(backend_uri + `/harvest-layer/${id}`, {
             method: "POST",
